@@ -1,0 +1,43 @@
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Body Reset and Font */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Auth Pages */
+.auth-page {
+  background-color: #f8f9fa;
+}
+
+/* Custom Card Shadow (optional, but Tailwind `shadow-lg` can also be used) */
+.auth-card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom Fade-In Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in,
+.animate-fade-in {
+  animation: fade-in 0.5s ease-in-out;
+}
+
+/* Image Styling */
+.card-img-top {
+  max-height: 200px;
+  object-fit: cover;
+}
