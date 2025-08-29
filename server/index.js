@@ -33,8 +33,7 @@ app.use(
     origin: [
       "http://localhost:3000",
       "http://localhost:3001",
-      "https://poster-generetorapp-frontend.onrender.com",
-      "https://post-generate-app-1.onrender.com"
+      "https://businesswhastapp.com"
     ],
     credentials: true,
   })

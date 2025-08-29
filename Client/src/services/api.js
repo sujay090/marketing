@@ -1,10 +1,7 @@
 import axios from "axios";
 
 // Base API URL from environment variable or fallback
-const API_URL = "http://localhost:5000/api"
-// "https://maxhub.center/api"
-// "https://marketing.gs3solution.us"
-// Create Axios instance
+const API_URL = process.env.VITE_API_URL || "http://localhost:5000/api";
 const api = axios.create({
   baseURL: API_URL,
   headers: {
