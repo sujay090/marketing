@@ -10,41 +10,22 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '22'
-        cache: 'npm'
-        cache-dependency-path: |
-          client/package-lock.json
-          server/package-lock.json
+      uses: actions/checkout@v4
 
     - name: Deploy to AWS
-      uses: appleboy/ssh-action@v0.1.8
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.AWS_HOST }}
         username: ${{ secrets.AWS_USERNAME }}
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
-          cd /var/www/marketing
+          export PATH="/home/ubuntu/.nvm/versions/node/v22.18.0/bin:$PATH"
           
-          # Pull latest changes
+          cd /var/www/marketing
           git pull origin main
           
-          # Update server dependencies
-          cd server
-          npm ci
+          cd server && npm ci --production
+          cd ../client && npm ci && npm run build
+          cd .. && pm2 restart marketing
           
-          # Build and update client
-          cd ../client
-          npm ci
-          npm run build
-          
-          # Restart application
-          cd ..
-          pm2 restart marketing
-          
-          # Reload nginx
-          sudo nginx -t && sudo systemctl reload nginx
+          sudo systemctl reload nginx
