@@ -25,7 +25,7 @@ jobs:
           git pull origin main
           
           cd server && npm ci --production
-          cd ../client && npm ci && npm run build
+          cd ../Client && npm ci && npm run build
           cd .. && pm2 restart marketing
           
           sudo systemctl reload nginx
