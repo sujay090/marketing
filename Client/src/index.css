@@ -3,41 +3,336 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Body Reset and Font */
+/* CSS Custom Properties for Dynamic Theming */
+:root {
+    --color-primary: #3b82f6;
+    --color-secondary: #64748b;
+    --color-accent: #06b6d4;
+    --color-background: #ffffff;
+    --color-surface: #f8fafc;
+    --color-text: #1e293b;
+    --glassmorphism-bg: rgba(255, 255, 255, 0.25);
+    --glassmorphism-border: rgba(255, 255, 255, 0.18);
+}
+
+/* Global Styles */
+* {
+    box-sizing: border-box;
+}
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--color-background);
+    color: var(--color-text);
+    transition: all 0.3s ease;
 }
 
-/* Auth Pages */
+/* Glassmorphism Components */
+.glass-card {
+    background: var(--glassmorphism-bg);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 20px;
+    border: 1px solid var(--glassmorphism-border);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.glass-button {
+    background: var(--glassmorphism-bg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--glassmorphism-border);
+    transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Modern Card Styles */
+.modern-card {
+    background: var(--color-surface);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.modern-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Gradient Buttons */
+.btn-gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.btn-gradient-secondary {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+/* Neon Effects */
+.neon-text {
+    text-shadow:
+        0 0 5px var(--color-primary),
+        0 0 10px var(--color-primary),
+        0 0 15px var(--color-primary),
+        0 0 20px var(--color-primary);
+}
+
+.neon-border {
+    border: 2px solid var(--color-primary);
+    box-shadow:
+        0 0 10px var(--color-primary),
+        inset 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Auth Pages Enhanced */
 .auth-page {
-  background-color: #f8f9fa;
+    min-height: 100vh;
+    background: var(--color-background);
+    position: relative;
 }
 
-/* Custom Card Shadow (optional, but Tailwind `shadow-lg` can also be used) */
+.auth-page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+    pointer-events: none;
+}
+
 .auth-card {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(20px);
+    background: var(--glassmorphism-bg);
+    border: 1px solid var(--glassmorphism-border);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
 }
 
-/* Custom Fade-In Animation */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Loading Animations */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
-.fade-in,
-.animate-fade-in {
-  animation: fade-in 0.5s ease-in-out;
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* Image Styling */
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+    animation: slideInFromRight 0.6s ease-out;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent);
+}
+
+/* Status Badges Enhanced */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.status-live {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-color: #10b981;
+    animation: pulse 2s infinite;
+}
+
+.status-upcoming {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border-color: #3b82f6;
+}
+
+.status-expired {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-color: #ef4444;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+/* Form Controls Enhanced */
+.form-control:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary), 0.25);
+}
+
+.form-floating>label {
+    color: var(--color-secondary);
+}
+
+/* Table Enhancements */
+.table-modern {
+    background: var(--color-surface);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.table-modern thead {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: white;
+}
+
+.table-modern tbody tr:hover {
+    background: var(--glassmorphism-bg);
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+/* Modal Enhancements */
+.modal-content {
+    background: var(--color-surface);
+    border: 1px solid var(--glassmorphism-border);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+}
+
+.modal-backdrop {
+    backdrop-filter: blur(5px);
+}
+
+/* Image Styling Enhanced */
 .card-img-top {
-  max-height: 200px;
-  object-fit: cover;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.card-img-top:hover {
+    transform: scale(1.05);
+}
+
+/* Utility Classes */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent)) !important;
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-primary)) !important;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .glass-card {
+        border-radius: 15px;
+        margin: 1rem;
+    }
+
+    .auth-card {
+        border-radius: 15px;
+        margin: 1rem;
+    }
+}
+
+/* Dark Mode Specific Adjustments */
+[data-bs-theme="dark"] {
+    --glassmorphism-bg: rgba(15, 23, 42, 0.25);
+    --glassmorphism-border: rgba(255, 255, 255, 0.1);
+}
+
+[data-bs-theme="dark"] .glass-button:hover {
+    background: rgba(15, 23, 42, 0.4);
 }

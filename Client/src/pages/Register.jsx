@@ -1,208 +1,285 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { toast } from 'react-toastify';
+import ThemeSelector from '../components/ThemeSelector';
 
 const Register = () => {
-  const navigate = useNavigate();
-  const { register } = useAuth();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+    const { register } = useAuth();
+    const { getCurrentTheme } = useTheme();
+    const currentTheme = getCurrentTheme();
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+    });
+    const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      setLoading(false);
-      return;
-    }
+        if (formData.password !== formData.confirmPassword) {
+            toast.error('Passwords do not match');
+            setLoading(false);
+            return;
+        }
 
-    try {
-      console.log('Register: Sending data', formData);
-      const result = await register({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-      });
+        try {
+            console.log('Register: Sending data', formData);
+            const result = await register({
+                name: formData.name.trim(),
+                email: formData.email.trim(),
+                password: formData.password,
+            });
 
-      if (result.success) {
-        toast.success('Registration successful!');
-        navigate('/dashboard');
-      } else {
-        toast.error(result.message || 'Registration failed');
-      }
-    } catch (error) {
-      console.error('Register error:', error);
-      const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (result.success) {
+                toast.success('Registration successful!');
+                navigate('/dashboard');
+            } else {
+                toast.error(result.message || 'Registration failed');
+            }
+        } catch (error) {
+            console.error('Register error:', error);
+            const message = error.response?.data?.message || 'Registration failed';
+            toast.error(message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-gradient-to-br from-slate-800/90 via-blue-900/50 to-slate-700/90 backdrop-blur-sm border border-blue-500/30 rounded-2xl shadow-2xl overflow-hidden">
-          <div className="px-8 py-6 text-center border-b border-blue-500/30">
-            <h4 className="text-2xl font-bold text-white">
-              <svg className="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              Sign Up
-            </h4>
-          </div>
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Name */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-gray-200 mb-2">
-                  Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-blue-400/30 text-white placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Enter your name"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-200 mb-2">
-                  Email address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                    </svg>
-                  </div>
-                  <input
-                    type="email"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-blue-400/30 text-white placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-200 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2m0 0V7a2 2 0 012-2h4a2 2 0 012 2v2z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="password"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-blue-400/30 text-white placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Enter your password"
-                    required
-                    minLength="6"
-                  />
-                </div>
-              </div>
-
-              {/* Confirm Password */}
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-200 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="password"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-blue-400/30 text-white placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition-all duration-200"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Confirm your password"
-                    required
-                    minLength="6"
-                  />
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Creating Account...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center space-x-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    <span>Sign Up</span>
-                  </div>
-                )}
-              </button>
-            </form>
-
-            {/* Login Redirect */}
-            <div className="text-center mt-6">
-              <p className="text-gray-300">
-                Already have an account?{' '}
-                <Link to="/login" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
-                  Sign In
-                </Link>
-              </p>
+    return (
+        <div
+            className="min-vh-100 d-flex align-items-center justify-content-center p-4 position-relative"
+            style={{ background: currentTheme.background }}
+        >
+            {/* Theme Selector - Top Right */}
+            <div className="position-absolute top-0 end-0 p-4">
+                <ThemeSelector />
             </div>
-          </div>
+
+            <div className="w-100" style={{ maxWidth: '28rem' }}>
+                <div
+                    className="rounded-4 shadow-lg overflow-hidden"
+                    style={{
+                        background: currentTheme.surface,
+                        border: `1px solid ${currentTheme.border}`,
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        boxShadow: currentTheme.shadow
+                    }}
+                >
+                    <div
+                        className="px-4 py-4 text-center"
+                        style={{ borderBottom: `1px solid ${currentTheme.border}` }}
+                    >
+                        <h4 className="fs-3 fw-bold mb-0" style={{ color: currentTheme.text }}>
+                            <i className="fas fa-user-plus me-2" style={{ color: currentTheme.primary }}></i>
+                            Sign Up
+                        </h4>
+                        <p className="mb-0 mt-2" style={{ color: currentTheme.textSecondary }}>
+                            Create your Post Generator account
+                        </p>
+                    </div>
+
+                    <div className="p-4">
+                        <form onSubmit={handleSubmit}>
+                            {/* Name */}
+                            <div className="mb-3">
+                                <label htmlFor="name" className="form-label fw-semibold" style={{ color: currentTheme.text }}>
+                                    Full Name
+                                </label>
+                                <div className="position-relative">
+                                    <div className="position-absolute top-50 start-0 translate-middle-y ps-3">
+                                        <i className="fas fa-user" style={{ color: currentTheme.textSecondary }}></i>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="form-control ps-5 py-3 rounded-3"
+                                        style={{
+                                            background: currentTheme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                            border: `1px solid ${currentTheme.border}`,
+                                            color: currentTheme.text,
+                                            backdropFilter: 'blur(10px)',
+                                            WebkitBackdropFilter: 'blur(10px)'
+                                        }}
+                                        id="name"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Enter your full name"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Email */}
+                            <div className="mb-3">
+                                <label htmlFor="email" className="form-label fw-semibold" style={{ color: currentTheme.text }}>
+                                    Email Address
+                                </label>
+                                <div className="position-relative">
+                                    <div className="position-absolute top-50 start-0 translate-middle-y ps-3">
+                                        <i className="fas fa-envelope" style={{ color: currentTheme.textSecondary }}></i>
+                                    </div>
+                                    <input
+                                        type="email"
+                                        className="form-control ps-5 py-3 rounded-3"
+                                        style={{
+                                            background: currentTheme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                            border: `1px solid ${currentTheme.border}`,
+                                            color: currentTheme.text,
+                                            backdropFilter: 'blur(10px)',
+                                            WebkitBackdropFilter: 'blur(10px)'
+                                        }}
+                                        id="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="Enter your email"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Password */}
+                            <div className="mb-3">
+                                <label htmlFor="password" className="form-label fw-semibold" style={{ color: currentTheme.text }}>
+                                    Password
+                                </label>
+                                <div className="position-relative">
+                                    <div className="position-absolute top-50 start-0 translate-middle-y ps-3" style={{ zIndex: 1 }}>
+                                        <i className="fas fa-lock" style={{ color: currentTheme.textSecondary }}></i>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        className="form-control ps-5 py-3 rounded-3"
+                                        style={{
+                                            background: currentTheme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                            border: `1px solid ${currentTheme.border}`,
+                                            color: currentTheme.text,
+                                            backdropFilter: 'blur(10px)',
+                                            WebkitBackdropFilter: 'blur(10px)'
+                                        }}
+                                        id="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="Enter your password"
+                                        required
+                                        minLength="6"
+                                    />
+                                </div>
+                                <small style={{ color: currentTheme.textSecondary }}>Minimum 6 characters</small>
+                            </div>
+
+                            {/* Confirm Password */}
+                            <div className="mb-4">
+                                <label htmlFor="confirmPassword" className="form-label fw-semibold" style={{ color: currentTheme.text }}>
+                                    Confirm Password
+                                </label>
+                                <div className="position-relative">
+                                    <div className="position-absolute top-50 start-0 translate-middle-y ps-3" style={{ zIndex: 1 }}>
+                                        <i className="fas fa-check-circle" style={{ color: currentTheme.textSecondary }}></i>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        className="form-control ps-5 py-3 rounded-3"
+                                        style={{
+                                            background: currentTheme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                            border: `1px solid ${currentTheme.border}`,
+                                            color: currentTheme.text,
+                                            backdropFilter: 'blur(10px)',
+                                            WebkitBackdropFilter: 'blur(10px)'
+                                        }}
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        placeholder="Confirm your password"
+                                        required
+                                        minLength="6"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Submit Button */}
+                            <button
+                                type="submit"
+                                className="btn w-100 py-3 fw-semibold rounded-3 shadow-sm"
+                                style={{
+                                    background: currentTheme.primary,
+                                    border: 'none',
+                                    color: currentTheme.isDark ? '#ffffff' : '#ffffff',
+                                    transition: 'all 0.3s ease',
+                                    transform: 'scale(1)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.transform = 'scale(1.02)';
+                                    e.target.style.boxShadow = currentTheme.shadow;
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.transform = 'scale(1)';
+                                }}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <div className="d-flex align-items-center justify-content-center gap-2">
+                                        <div
+                                            className="spinner-border spinner-border-sm"
+                                            role="status"
+                                            style={{ width: '1rem', height: '1rem' }}
+                                        >
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span>Creating Account...</span>
+                                    </div>
+                                ) : (
+                                    <div className="d-flex align-items-center justify-content-center gap-2">
+                                        <i className="fas fa-user-plus"></i>
+                                        <span>Sign Up</span>
+                                    </div>
+                                )}
+                            </button>
+                        </form>
+
+                        <div className="text-center mt-4">
+                            <p className="mb-0" style={{ color: currentTheme.textSecondary }}>
+                                Already have an account?{' '}
+                                <Link
+                                    to="/login"
+                                    className="text-decoration-none fw-semibold"
+                                    style={{
+                                        color: currentTheme.primary,
+                                        transition: 'color 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.color = currentTheme.accent;
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.color = currentTheme.primary;
+                                    }}
+                                >
+                                    Sign In
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Register;

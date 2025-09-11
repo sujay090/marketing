@@ -1,189 +1,352 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import {
-  Squares2X2Icon,
-  CalendarIcon,
-  UsersIcon,
-  UserPlusIcon,
-  PhotoIcon,
-  CloudArrowUpIcon,
-  ArrowLeftOnRectangleIcon,
-  Bars3Icon,
-  XMarkIcon,
+    Squares2X2Icon,
+    CalendarIcon,
+    UsersIcon,
+    UserPlusIcon,
+    PhotoIcon,
+    CloudArrowUpIcon,
+    ArrowLeftOnRectangleIcon,
+    Bars3Icon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
-
-const menuItems = [
-  { label: 'Dashboard', icon: Squares2X2Icon, path: '/dashboard' },
-  { label: 'Schedule', icon: CalendarIcon, path: '/schedule' },
-  { label: 'Schedule List', icon: CalendarIcon, path: '/schedule-list' },
-  { label: 'Customers List', icon: UsersIcon, path: '/customers-list' },
-  { label: 'Add Customer', icon: UserPlusIcon, path: '/customers' },
-  { label: 'Posters', icon: PhotoIcon, path: '/posterList' },
-  { label: 'Upload Poster', icon: CloudArrowUpIcon, path: '/upload' },
-  { label: 'Profile', icon: CalendarIcon, path: '/profile' },
-];
+import ThemeSelector from './ThemeSelector';
 
 const SidebarLayout = ({ children }) => {
-  const location = useLocation();
-  const { logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
-  const sidebarRef = useRef();
+    const { getCurrentTheme } = useTheme();
+    const currentTheme = getCurrentTheme();
+    const { logout } = useAuth();
+    
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const location = useLocation();
+    const sidebarRef = useRef(null);
 
-  // Close sidebar on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && sidebarOpen) {
-        setSidebarOpen(false);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [sidebarOpen]);
-
-  // Trap focus inside sidebar when open
-  useEffect(() => {
-    if (!sidebarOpen || !sidebarRef.current) return;
-
-    const focusableElements = sidebarRef.current.querySelectorAll(
-      'a, button, [tabindex]:not([tabindex="-1"])'
-    );
-    const firstEl = focusableElements[0];
-    const lastEl = focusableElements[focusableElements.length - 1];
-
-    const trapFocus = (e) => {
-      if (e.key !== 'Tab') return;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstEl) {
-          e.preventDefault();
-          lastEl.focus();
+    const menuItems = [
+        {
+            title: 'Dashboard',
+            icon: 'fas fa-tachometer-alt',
+            path: '/dashboard',
+            color: currentTheme.primary
+        },
+        {
+            title: 'Customers',
+            icon: 'fas fa-users',
+            path: '/customer',
+            color: currentTheme.success
+        },
+        {
+            title: 'Poster Templates',
+            icon: 'fas fa-layer-group',
+            path: '/poster-templates',
+            color: currentTheme.info
+        },
+        {
+            title: 'Poster Gallery',
+            icon: 'fas fa-images',
+            path: '/posterList',
+            color: currentTheme.warning
+        },
+        {
+            title: 'WhatsApp Messaging',
+            icon: 'fab fa-whatsapp',
+            path: '/whatsapp-messaging',
+            color: '#25D366'
+        },
+        {
+            title: 'Advanced Scheduler',
+            icon: 'fas fa-calendar-alt',
+            path: '/schedule',
+            color: currentTheme.secondary
+        },
+        {
+            title: 'Bulk Campaign',
+            icon: 'fas fa-bullhorn',
+            path: '/bulk-campaign',
+            color: currentTheme.danger
+        },
+        {
+            title: 'Upload Assets',
+            icon: 'fas fa-cloud-upload-alt',
+            path: '/upload',
+            color: currentTheme.info
+        },
+        {
+            title: 'Profile Settings',
+            icon: 'fas fa-user-cog',
+            path: '/profile',
+            color: currentTheme.textSecondary
         }
-      } else {
-        if (document.activeElement === lastEl) {
-          e.preventDefault();
-          firstEl.focus();
-        }
-      }
-    };
+    ];
 
-    document.addEventListener('keydown', trapFocus);
-    firstEl?.focus();
+    // Close sidebar on Escape key
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isSidebarOpen) {
+                setIsSidebarOpen(false);
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isSidebarOpen]);
 
-    return () => document.removeEventListener('keydown', trapFocus);
-  }, [sidebarOpen]);
+    // Trap focus inside sidebar when open
+    useEffect(() => {
+        if (!isSidebarOpen || !sidebarRef.current) return;
 
-  return (
-    <div className="flex min-h-screen font-['Inter',sans-serif] bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800">
-      {/* Mobile Header */}
-      <header className="md:hidden flex items-center justify-between bg-gradient-to-r from-slate-800 to-purple-800 text-white px-4 py-3 fixed top-0 left-0 right-0 z-20 shadow-lg border-b border-purple-500/20">
-        <div className="text-xl font-bold">
-          <span className="text-yellow-300">Post</span> Generator
-        </div>
-        <button
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open sidebar"
-        >
-          <Bars3Icon className="w-6 h-6" />
-        </button>
-      </header>
+        const focusableElements = sidebarRef.current.querySelectorAll(
+            'a, button, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstEl = focusableElements[0];
+        const lastEl = focusableElements[focusableElements.length - 1];
 
-      {/* Desktop Header with Toggle */}
-      <header className="hidden md:flex items-center justify-between bg-gradient-to-r from-slate-800 to-purple-800 text-white px-4 py-3 fixed top-0 right-0 z-20 shadow-lg border-b border-purple-500/20" style={{ left: sidebarOpen ? '256px' : '0px', transition: 'left 0.3s ease-in-out' }}>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="text-white hover:bg-purple-700/50 p-2 rounded-lg transition-colors"
-          aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-        >
-          {sidebarOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
-        </button>
-        <div className="text-xl font-bold">
-          <span className="text-yellow-300">Post</span> Generator
-        </div>
-      </header>
+        const trapFocus = (e) => {
+            if (e.key !== 'Tab') return;
 
-      {/* Sidebar */}
-      <aside
-        ref={sidebarRef}
-        role="dialog"
-        aria-label="Sidebar navigation"
-        className={`
-          fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-slate-800 to-slate-900 text-gray-100 flex flex-col
-          transform transition-transform duration-300 ease-in-out z-30 shadow-2xl border-r border-purple-500/20
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
-      >
-        {/* Close button - Mobile only */}
-        <div className="md:hidden flex justify-end p-4">
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="text-white"
-            aria-label="Close sidebar"
-          >
-            <XMarkIcon className="w-6 h-6" />
-          </button>
-        </div>
+            if (e.shiftKey) {
+                if (document.activeElement === firstEl) {
+                    e.preventDefault();
+                    lastEl.focus();
+                }
+            } else {
+                if (document.activeElement === lastEl) {
+                    e.preventDefault();
+                    firstEl.focus();
+                }
+            }
+        };
 
-        {/* Logo */}
-        <div className="text-xl font-bold px-6 py-5 border-b border-purple-500/30">
-          <span className="text-yellow-300">Post</span> Generator
-        </div>
+        document.addEventListener('keydown', trapFocus);
+        firstEl?.focus();
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
-          {menuItems.map(({ label, icon: Icon, path }) => {
-            const isActive = location.pathname === path;
-            return (
-              <Link
-                key={path}
-                to={path}
-                onClick={() => setSidebarOpen(false)}
-                className={`text-decoration-none flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg font-semibold border border-purple-400/30'
-                    : 'hover:bg-gradient-to-r hover:from-slate-700 hover:to-purple-800/50 text-gray-100 hover:text-white'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {label}
-              </Link>
-            );
-          })}
-          <button
-            onClick={() => {
-              logout();
-              setSidebarOpen(false);
-            }}
-            className="mt-6 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-lg transition-transform hover:scale-105 w-full"
-          >
-            <ArrowLeftOnRectangleIcon className="w-5 h-5" />
-            Logout
-          </button>
-        </nav>
-      </aside>
+        return () => document.removeEventListener('keydown', trapFocus);
+    }, [isSidebarOpen]);
 
-      {/* Overlay */}
-      {sidebarOpen && (
+    return (
         <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black bg-opacity-60 z-20 md:hidden backdrop-blur-sm"
-          aria-hidden="true"
-        />
-      )}
+            className="d-flex min-vh-100"
+            style={{
+                fontFamily: "'Inter', sans-serif",
+                background: currentTheme.background
+            }}
+        >
+            {/* Mobile Header */}
+            <header
+                className="d-md-none d-flex align-items-center justify-content-between position-fixed top-0 start-0 end-0 px-4 py-3 shadow-lg"
+                style={{
+                    background: currentTheme.surface,
+                    color: currentTheme.text,
+                    zIndex: 20,
+                    border: `1px solid ${currentTheme.border}`,
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)'
+                }}
+            >
+                <div className="fs-5 fw-bold">
+                    <span style={{ color: currentTheme.primary }}>Post</span> Generator
+                </div>
+                <button
+                    className="btn"
+                    onClick={() => setIsSidebarOpen(true)}
+                    aria-label="Open sidebar"
+                    style={{ color: currentTheme.text }}
+                >
+                    <Bars3Icon className="w-6 h-6" />
+                </button>
+            </header>
 
-      {/* Main Content */}
-      <main 
-        className={`
-          flex-1 p-6 pt-16 overflow-auto bg-gradient-to-br from-slate-900/50 via-purple-900/30 to-slate-800/50 shadow-inner min-h-screen backdrop-blur-sm
-          transition-all duration-300 ease-in-out
-          ${sidebarOpen ? 'md:ml-64' : 'md:ml-0'}
-        `}
-        style={{ paddingTop: '4.5rem' }}
-      >
-        {children}
-      </main>
-    </div>
-  );
+            {/* Desktop Header with Toggle */}
+            <header
+                className="d-none d-md-flex align-items-center justify-content-between position-fixed top-0 end-0 px-4 py-3 shadow-lg"
+                style={{
+                    left: isSidebarOpen ? '256px' : '0px',
+                    transition: 'left 0.3s ease-in-out',
+                    background: currentTheme.surface,
+                    color: currentTheme.text,
+                    zIndex: 20,
+                    border: `1px solid ${currentTheme.border}`,
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)'
+                }}
+            >
+                <div className="d-flex align-items-center gap-3">
+                    <button
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        className="btn btn-outline-primary"
+                        style={{
+                            background: 'transparent',
+                            border: `1px solid ${currentTheme.primary}`,
+                            color: currentTheme.primary,
+                            borderRadius: '8px'
+                        }}
+                        aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+                    >
+                        {isSidebarOpen ? <XMarkIcon className="w-5 h-5" /> : <Bars3Icon className="w-5 h-5" />}
+                    </button>
+                </div>
+
+                <div className="fs-5 fw-bold">
+                    <span style={{ color: currentTheme.primary }}>Post</span> Generator
+                </div>
+
+                <ThemeSelector />
+            </header>
+
+            {/* Sidebar */}
+            <aside
+                ref={sidebarRef}
+                role="dialog"
+                aria-label="Sidebar navigation"
+                className={`position-fixed top-0 start-0 h-100 d-flex flex-column shadow-lg ${isSidebarOpen ? 'translate-x-0' : 'translate-x-n100'
+                    }`}
+                style={{
+                    width: '256px',
+                    background: currentTheme.surface,
+                    color: currentTheme.text,
+                    transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+                    transition: 'transform 0.3s ease-in-out',
+                    zIndex: 30,
+                    border: `1px solid ${currentTheme.border}`,
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)'
+                }}
+            >
+                {/* Close button - Mobile only */}
+                <div className="d-md-none d-flex justify-content-end p-4">
+                    <button
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="btn"
+                        style={{ color: currentTheme.text }}
+                        aria-label="Close sidebar"
+                    >
+                        <XMarkIcon className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {/* Logo */}
+                <div
+                    className="fs-5 fw-bold px-4 py-4"
+                    style={{ borderBottom: `1px solid ${currentTheme.border}` }}
+                >
+                    <span style={{ color: currentTheme.primary }}>Post</span> Generator
+                </div>
+
+                {/* Navigation */}
+                <nav className="flex-fill overflow-auto px-3 py-3" style={{ scrollbarWidth: 'thin' }}>
+                    <div className="d-flex flex-column gap-2">
+                        {menuItems.map(({ title, icon, path, color }) => {
+                            const isActive = location.pathname === path;
+                            return (
+                                <Link
+                                    key={path}
+                                    to={path}
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className="text-decoration-none d-flex align-items-center gap-3 px-3 py-2 rounded-3 transition-all"
+                                    style={{
+                                        background: isActive
+                                            ? currentTheme.primary
+                                            : 'transparent',
+                                        color: isActive
+                                            ? currentTheme.isDark ? '#ffffff' : '#ffffff'
+                                            : currentTheme.text,
+                                        fontWeight: isActive ? 600 : 400,
+                                        boxShadow: isActive ? currentTheme.shadow : 'none',
+                                        border: `1px solid ${isActive ? currentTheme.primary : 'transparent'}`,
+                                        transform: 'scale(1)',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (!isActive) {
+                                            e.target.style.background = `${currentTheme.primary}20`;
+                                            e.target.style.transform = 'translateX(4px)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!isActive) {
+                                            e.target.style.background = 'transparent';
+                                            e.target.style.transform = 'translateX(0)';
+                                        }
+                                    }}
+                                >
+                                    <i className={`${icon} w-5 h-5`} style={{ color: isActive ? '#ffffff' : color }}></i>
+                                    <span>{title}</span>
+                                </Link>
+                            );
+                        })}
+
+                        <button
+                            onClick={() => {
+                                logout();
+                                setIsSidebarOpen(false);
+                            }}
+                            className="d-flex align-items-center justify-content-center gap-2 px-3 py-2 mt-4 btn btn-danger rounded-3 shadow-sm fw-medium w-100"
+                            style={{
+                                background: currentTheme.danger,
+                                border: 'none',
+                                color: '#ffffff',
+                                transition: 'transform 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.transform = 'scale(1.02)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.transform = 'scale(1)';
+                            }}
+                        >
+                            <ArrowLeftOnRectangleIcon className="w-5 h-5" />
+                            Logout
+                        </button>
+                    </div>
+                </nav>
+            </aside>
+
+            {/* Overlay */}
+            {isSidebarOpen && (
+                <div
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="position-fixed top-0 start-0 w-100 h-100 d-md-none"
+                    style={{
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        zIndex: 20,
+                        backdropFilter: 'blur(4px)',
+                        WebkitBackdropFilter: 'blur(4px)'
+                    }}
+                    aria-hidden="true"
+                />
+            )}
+
+            {/* Main Content */}
+            <main
+                className="flex-fill p-4 overflow-auto"
+                style={{
+                    paddingTop: '5rem',
+                    marginLeft: isSidebarOpen ? '256px' : '0',
+                    transition: 'margin-left 0.3s ease-in-out',
+                    minHeight: '100vh',
+                    background: currentTheme.isDark
+                        ? 'rgba(0, 0, 0, 0.2)'
+                        : 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)'
+                }}
+            >
+                <div
+                    className="container-fluid p-4 rounded-4 shadow-sm"
+                    style={{
+                        background: currentTheme.surface,
+                        border: `1px solid ${currentTheme.border}`,
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        minHeight: 'calc(100vh - 7rem)'
+                    }}
+                >
+                    {children}
+                </div>
+            </main>
+        </div>
+    );
 };
 
 export default SidebarLayout;

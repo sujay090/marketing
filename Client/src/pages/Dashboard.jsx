@@ -1,215 +1,364 @@
 import React, { useState, useEffect } from 'react';
 import { dashboardAPI } from '../services/api';
 import { toast } from 'react-toastify';
+import { useTheme } from '../context/ThemeContext';
 import {
-  UsersIcon,
-  PhotoIcon,
-  CalendarIcon,
-  UserPlusIcon,
-  CloudArrowUpIcon,
-  EyeIcon,
-  CursorArrowRaysIcon,
-  ChartBarIcon,
-  InformationCircleIcon,
+    UsersIcon,
+    PhotoIcon,
+    CalendarIcon,
+    UserPlusIcon,
+    CloudArrowUpIcon,
+    EyeIcon,
+    CursorArrowRaysIcon,
+    ChartBarIcon,
+    InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 
 const Dashboard = () => {
-  const [metrics, setMetrics] = useState(null);
-  const [loading, setLoading] = useState(true);
+    const [metrics, setMetrics] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const { getCurrentTheme } = useTheme();
+    const currentTheme = getCurrentTheme();
 
-  // Calculate previous month's count for growth comparison
-  const calculatePreviousMonthCount = (key, currentCount) => {
-    // This is a placeholder - you should implement actual logic to get previous month's count
-    // For now, we'll just return a random number for demonstration
-    return Math.floor(currentCount * 0.75); // 75% of current count as an example
-  }
+    // Calculate previous month's count for growth comparison
+    const calculatePreviousMonthCount = (key, currentCount) => {
+        // This is a placeholder - you should implement actual logic to get previous month's count
+        // For now, we'll just return a random number for demonstration
+        return Math.floor(currentCount * 0.75); // 75% of current count as an example
+    }
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const response = await dashboardAPI.getMetrics();
-        setMetrics(response.data);
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to fetch metrics');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMetrics();
-  }, []);
+    useEffect(() => {
+        const fetchMetrics = async () => {
+            try {
+                const response = await dashboardAPI.getMetrics();
+                setMetrics(response.data);
+            } catch (error) {
+                toast.error(error.response?.data?.message || 'Failed to fetch metrics');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchMetrics();
+    }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex flex-col items-center justify-center py-24">
-        <div className="relative">
-          <div className="w-20 h-20 border-4 border-blue-300/30 border-t-blue-400 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-r-indigo-400 rounded-full animate-spin animation-delay-150"></div>
-        </div>
-        <div className="mt-8 text-center">
-          <h3 className="text-2xl font-semibold text-white mb-2">Loading Dashboard</h3>
-          <p className="text-gray-300">Fetching your latest metrics and insights...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="bg-gradient-to-br from-slate-800/80 via-blue-900/50 to-slate-700/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-blue-500/20 p-8 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg">
-                <ChartBarIcon className="h-8 w-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Dashboard Overview</h1>
-                <p className="text-gray-300 mt-1">Monitor your poster campaign performance and analytics</p>
-              </div>
-            </div>
-            <div className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-blue-900/50 to-indigo-900/50 rounded-xl px-4 py-2 border border-blue-400/20">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-300">Live Data</span>
-            </div>
-          </div>
-        </div>
-        {/* Metrics Grid */}
-        {metrics ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {Object.entries(metrics).map(([key, value]) => {
-              const currentValue = typeof value === 'object' ? (
-                Array.isArray(value) ? value.length : Object.keys(value).length
-              ) : value;
-              
-              const previousValue = calculatePreviousMonthCount(key, currentValue);
-              const growthPercentage = previousValue > 0 ? ((currentValue - previousValue) / previousValue * 100).toFixed(1) : 0;
-              const isPositiveGrowth = growthPercentage > 0;
-
-              return (
-                <div
-                  key={key}
-                  className="bg-gradient-to-br from-slate-800/60 via-blue-900/30 to-slate-700/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-blue-500/20 p-6 hover:shadow-blue-500/20 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  {/* Card Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl p-3 text-white shadow-md">
-                        {getIconForMetric(key)}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white capitalize">
-                          {key.replace(/([A-Z])/g, ' $1').trim()}
-                        </h3>
-                        <p className="text-sm text-gray-400">Total count</p>
-                      </div>
+    if (loading) {
+        return (
+            <div
+                className="min-vh-100 d-flex flex-column align-items-center justify-content-center py-5"
+                style={{ background: currentTheme.background }}
+            >
+                <div className="position-relative mb-4">
+                    <div
+                        className="spinner-border"
+                        role="status"
+                        style={{
+                            width: '5rem',
+                            height: '5rem',
+                            borderColor: `${currentTheme.primary}30`,
+                            borderTopColor: currentTheme.primary
+                        }}
+                    >
+                        <span className="visually-hidden">Loading...</span>
                     </div>
-                    
-                    {/* Growth Badge */}
-                    <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                      isPositiveGrowth 
-                        ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
-                        : growthPercentage < 0 
-                          ? 'bg-red-500/20 text-red-300 border border-red-400/30'
-                          : 'bg-gray-500/20 text-gray-300 border border-gray-400/30'
-                    }`}>
-                      {isPositiveGrowth ? (
-                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : growthPercentage < 0 ? (
-                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      <span>{Math.abs(growthPercentage)}%</span>
+                    <div
+                        className="spinner-border position-absolute top-0 start-0"
+                        role="status"
+                        style={{
+                            width: '5rem',
+                            height: '5rem',
+                            borderColor: 'transparent',
+                            borderRightColor: currentTheme.accent,
+                            animationDelay: '0.15s'
+                        }}
+                    >
+                        <span className="visually-hidden">Loading...</span>
                     </div>
-                  </div>
-
-                  {/* Main Value */}
-                  <div className="mb-4">
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                        {currentValue}
-                      </span>
-                      <span className="text-lg text-gray-400">items</span>
-                    </div>
-                  </div>
-
-                  {/* Comparison with Previous Month */}
-                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-blue-500/10">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-400">Previous month</p>
-                        <p className="text-2xl font-semibold text-gray-200">{previousValue}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-400">Growth</p>
-                        <p className={`text-lg font-semibold ${
-                          isPositiveGrowth ? 'text-green-400' : growthPercentage < 0 ? 'text-red-400' : 'text-gray-400'
-                        }`}>
-                          {isPositiveGrowth ? '+' : ''}{growthPercentage}%
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="mt-3">
-                      <div className="bg-slate-700/50 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-500 ${
-                            isPositiveGrowth ? 'bg-gradient-to-r from-green-400 to-green-600' : 
-                            growthPercentage < 0 ? 'bg-gradient-to-r from-red-400 to-red-600' : 
-                            'bg-gray-400'
-                          }`}
-                          style={{ 
-                            width: `${Math.min(Math.abs(growthPercentage), 100)}%` 
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="bg-gradient-to-br from-slate-800/60 via-blue-900/30 to-slate-700/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-blue-500/20 p-12 text-center">
-            <div className="bg-slate-700/50 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-              <InformationCircleIcon className="h-12 w-12 text-gray-400" />
+                <div className="text-center">
+                    <h3 className="fs-3 fw-semibold mb-3" style={{ color: currentTheme.text }}>
+                        Loading Dashboard
+                    </h3>
+                    <p style={{ color: currentTheme.textSecondary }}>
+                        Fetching your latest metrics and insights...
+                    </p>
+                </div>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No Metrics Available</h3>
-            <p className="text-gray-300 mb-6">There are currently no metrics to display. Start by adding customers and creating schedules.</p>
-            <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg">
-              Get Started
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+        );
+    }
+
+    return (
+        <div className="container-fluid py-4">
+            {/* Header Section */}
+            <div
+                className="rounded-4 shadow-lg p-4 mb-4"
+                style={{
+                    background: currentTheme.surface,
+                    border: `1px solid ${currentTheme.border}`,
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)'
+                }}
+            >
+                <div className="d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center gap-3">
+                        <div
+                            className="rounded-3 p-3 shadow-sm"
+                            style={{ background: currentTheme.primary }}
+                        >
+                            <ChartBarIcon className="h-8 w-8" style={{ color: '#ffffff' }} />
+                        </div>
+                        <div>
+                            <h1 className="fs-2 fw-bold mb-1" style={{ color: currentTheme.text }}>
+                                Dashboard Overview
+                            </h1>
+                            <p className="mb-0" style={{ color: currentTheme.textSecondary }}>
+                                Monitor your poster campaign performance and analytics
+                            </p>
+                        </div>
+                    </div>
+                    <div
+                        className="d-none d-md-flex align-items-center gap-2 px-3 py-2 rounded-3"
+                        style={{
+                            background: `${currentTheme.primary}20`,
+                            border: `1px solid ${currentTheme.primary}40`
+                        }}
+                    >
+                        <div
+                            className="rounded-circle animate-pulse"
+                            style={{
+                                width: '8px',
+                                height: '8px',
+                                background: currentTheme.success
+                            }}
+                        ></div>
+                        <span className="small fw-medium" style={{ color: currentTheme.text }}>
+                            Live Data
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Metrics Grid */}
+            {metrics ? (
+                <div className="row g-4">
+                    {Object.entries(metrics).map(([key, value]) => {
+                        const currentValue = typeof value === 'object' ? (
+                            Array.isArray(value) ? value.length : Object.keys(value).length
+                        ) : value;
+
+                        const previousValue = calculatePreviousMonthCount(key, currentValue);
+                        const growthPercentage = previousValue > 0 ? ((currentValue - previousValue) / previousValue * 100).toFixed(1) : 0;
+                        const isPositiveGrowth = growthPercentage > 0;
+
+                        return (
+                            <div key={key} className="col-12 col-md-6 col-xl-4">
+                                <div
+                                    className="rounded-4 shadow-lg p-4 h-100 transition-all"
+                                    style={{
+                                        background: currentTheme.surface,
+                                        border: `1px solid ${currentTheme.border}`,
+                                        backdropFilter: 'blur(16px)',
+                                        WebkitBackdropFilter: 'blur(16px)',
+                                        transform: 'translateY(0)',
+                                        transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.transform = 'translateY(-4px)';
+                                        e.target.style.boxShadow = currentTheme.shadow;
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    {/* Card Header */}
+                                    <div className="d-flex align-items-center justify-content-between mb-4">
+                                        <div className="d-flex align-items-center gap-3">
+                                            <div
+                                                className="rounded-3 p-3 shadow-sm"
+                                                style={{ background: currentTheme.primary }}
+                                            >
+                                                <div style={{ color: '#ffffff' }}>
+                                                    {getIconForMetric(key)}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="fs-6 fw-semibold mb-1 text-capitalize" style={{ color: currentTheme.text }}>
+                                                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                </h3>
+                                                <p className="small mb-0" style={{ color: currentTheme.textSecondary }}>
+                                                    Total count
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Growth Badge */}
+                                        <div
+                                            className="d-flex align-items-center gap-1 px-2 py-1 rounded-pill"
+                                            style={{
+                                                background: isPositiveGrowth
+                                                    ? `${currentTheme.success}20`
+                                                    : growthPercentage < 0
+                                                        ? `${currentTheme.danger}20`
+                                                        : `${currentTheme.textSecondary}20`,
+                                                color: isPositiveGrowth
+                                                    ? currentTheme.success
+                                                    : growthPercentage < 0
+                                                        ? currentTheme.danger
+                                                        : currentTheme.textSecondary,
+                                                border: `1px solid ${isPositiveGrowth
+                                                    ? currentTheme.success + '40'
+                                                    : growthPercentage < 0
+                                                        ? currentTheme.danger + '40'
+                                                        : currentTheme.textSecondary + '40'}`
+                                            }}
+                                        >
+                                            <i className={`fas fa-arrow-${isPositiveGrowth ? 'up' : growthPercentage < 0 ? 'down' : 'right'}`} style={{ fontSize: '0.75rem' }}></i>
+                                            <span className="small fw-semibold">{Math.abs(growthPercentage)}%</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Main Value */}
+                                    <div className="mb-4">
+                                        <div className="d-flex align-items-baseline gap-2">
+                                            <span className="display-4 fw-bold" style={{ color: currentTheme.primary }}>
+                                                {currentValue}
+                                            </span>
+                                            <span className="fs-6" style={{ color: currentTheme.textSecondary }}>
+                                                items
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Comparison with Previous Month */}
+                                    <div
+                                        className="rounded-3 p-3"
+                                        style={{
+                                            background: currentTheme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                            border: `1px solid ${currentTheme.border}`
+                                        }}
+                                    >
+                                        <div className="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <p className="small mb-1" style={{ color: currentTheme.textSecondary }}>
+                                                    Previous month
+                                                </p>
+                                                <p className="fs-5 fw-semibold mb-0" style={{ color: currentTheme.text }}>
+                                                    {previousValue}
+                                                </p>
+                                            </div>
+                                            <div className="text-end">
+                                                <p className="small mb-1" style={{ color: currentTheme.textSecondary }}>
+                                                    Growth
+                                                </p>
+                                                <p
+                                                    className="fs-6 fw-semibold mb-0"
+                                                    style={{
+                                                        color: isPositiveGrowth
+                                                            ? currentTheme.success
+                                                            : growthPercentage < 0
+                                                                ? currentTheme.danger
+                                                                : currentTheme.textSecondary
+                                                    }}
+                                                >
+                                                    {isPositiveGrowth ? '+' : ''}{growthPercentage}%
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="mt-3">
+                                            <div
+                                                className="rounded-pill overflow-hidden"
+                                                style={{
+                                                    height: '4px',
+                                                    background: currentTheme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                                                }}
+                                            >
+                                                <div
+                                                    className="h-100 rounded-pill transition-all"
+                                                    style={{
+                                                        width: `${Math.min(Math.abs(growthPercentage), 100)}%`,
+                                                        background: isPositiveGrowth
+                                                            ? currentTheme.success
+                                                            : growthPercentage < 0
+                                                                ? currentTheme.danger
+                                                                : currentTheme.textSecondary,
+                                                        transition: 'width 0.5s ease'
+                                                    }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div
+                    className="rounded-4 shadow-lg p-5 text-center"
+                    style={{
+                        background: currentTheme.surface,
+                        border: `1px solid ${currentTheme.border}`,
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)'
+                    }}
+                >
+                    <div
+                        className="rounded-circle p-4 mx-auto mb-4 d-flex align-items-center justify-content-center"
+                        style={{
+                            width: '96px',
+                            height: '96px',
+                            background: currentTheme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        }}
+                    >
+                        <InformationCircleIcon className="h-12 w-12" style={{ color: currentTheme.textSecondary }} />
+                    </div>
+                    <h3 className="fs-4 fw-semibold mb-2" style={{ color: currentTheme.text }}>
+                        No Metrics Available
+                    </h3>
+                    <p className="mb-4" style={{ color: currentTheme.textSecondary }}>
+                        There are currently no metrics to display. Start by adding customers and creating schedules.
+                    </p>
+                    <button
+                        className="btn px-4 py-2 fw-medium rounded-3 shadow-sm"
+                        style={{
+                            background: currentTheme.primary,
+                            border: 'none',
+                            color: '#ffffff',
+                            transition: 'transform 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.transform = 'scale(1.05)';
+                            e.target.style.boxShadow = currentTheme.shadow;
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.transform = 'scale(1)';
+                        }}
+                    >
+                        Get Started
+                    </button>
+                </div>
+            )}
+        </div>
+    );
 };
 
 // Helper function: return Heroicons components for each metric with appropriate colors
 const getIconForMetric = (key) => {
-  const iconMap = {
-    totalUsers: <UsersIcon className="w-5 h-5" />,
-    activePosters: <PhotoIcon className="w-5 h-5" />,
-    schedules: <CalendarIcon className="w-5 h-5" />,
-    customers: <UserPlusIcon className="w-5 h-5" />,
-    uploads: <CloudArrowUpIcon className="w-5 h-5" />,
-    views: <EyeIcon className="w-5 h-5" />,
-    clicks: <CursorArrowRaysIcon className="w-5 h-5" />,
-    impressions: <ChartBarIcon className="w-5 h-5" />,
-  };
+    const iconMap = {
+        totalUsers: <UsersIcon className="w-5 h-5" />,
+        activePosters: <PhotoIcon className="w-5 h-5" />,
+        schedules: <CalendarIcon className="w-5 h-5" />,
+        customers: <UserPlusIcon className="w-5 h-5" />,
+        uploads: <CloudArrowUpIcon className="w-5 h-5" />,
+        views: <EyeIcon className="w-5 h-5" />,
+        clicks: <CursorArrowRaysIcon className="w-5 h-5" />,
+        impressions: <ChartBarIcon className="w-5 h-5" />,
+    };
 
-  // Make it case-insensitive
-  const lowerKey = key.toLowerCase();
-  return iconMap[lowerKey] || <InformationCircleIcon className="w-5 h-5" />;
+    // Make it case-insensitive
+    const lowerKey = key.toLowerCase();
+    return iconMap[lowerKey] || <InformationCircleIcon className="w-5 h-5" />;
 };
 
 export default Dashboard;

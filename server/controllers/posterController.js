@@ -4,6 +4,8 @@ import sharp from "sharp";
 import Poster from "../models/Poster.js";
 import GeneratedPoster from "../models/GeneratedPoster.js";
 import Customer from "../models/Customer.js";
+import User from "../models/User.js";
+import Template from "../models/Template.js";
 
 // Utility to ensure directory exists
 function ensureDirExists(dirPath) {
@@ -12,14 +14,17 @@ function ensureDirExists(dirPath) {
   }
 }
 
-// 1. Upload poster with placeholders
+// @desc    Upload poster with placeholders
+// @route   POST /api/posters/upload
+// @access  Private
 export const uploadPoster = async (req, res) => {
   try {
-    const { category, placeholders } = req.body;
+    const { category, placeholders, title, description, tags, isPrivate, isTemplate, templatePrice } = req.body;
+    
     if (!category || !req.file) {
-      return res
-        .status(400)
-        .json({ message: "Missing category or image file" });
+      return res.status(400).json({ 
+        message: "Missing required fields: category and image file" 
+      });
     }
 
     // Parse placeholders JSON string to array, fallback to empty array
@@ -31,28 +36,22 @@ export const uploadPoster = async (req, res) => {
 
     // Create SVG overlay with all placeholders in their positions/styles
     const svgOverlay = `
-      <svg width="${imageMeta.width}" height="${
-      imageMeta.height
-    }" xmlns="http://www.w3.org/2000/svg">
-        ${parsedPlaceholders
-          .map((ph) => {
-            const style = ph.style || {};
-            const fontFamily = style.fontFamily || "Arial";
-            const fontSize = parseInt(style.fontSize) || 24;
-            const color = style.color || "#000000";
-            const fontWeight = style.fontWeight || "normal";
+      <svg width="${imageMeta.width}" height="${imageMeta.height}" xmlns="http://www.w3.org/2000/svg">
+        ${parsedPlaceholders.map((ph) => {
+          const style = ph.style || {};
+          const fontFamily = style.fontFamily || "Arial";
+          const fontSize = parseInt(style.fontSize) || 24;
+          const color = style.color || "#000000";
+          const fontWeight = style.fontWeight || "normal";
 
-            // Escape text content for safety (basic)
-            const text = String(ph.text || "")
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;");
+          // Escape text content for safety (basic)
+          const text = String(ph.text || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
 
-            return `<text x="${ph.x}" y="${
-              ph.y
-            }" font-family="${fontFamily}" font-size="${fontSize}" fill="${color}" font-weight="${fontWeight}">${""}</text>`;
-          })
-          .join("")}
+          return `<text x="${ph.x}" y="${ph.y}" font-family="${fontFamily}" font-size="${fontSize}" fill="${color}" font-weight="${fontWeight}">${""}</text>`;
+        }).join("")}
       </svg>
     `;
 
@@ -70,20 +69,67 @@ export const uploadPoster = async (req, res) => {
     // Save final composited image
     await sharp(finalImageBuffer).toFile(outputFilePath);
 
+    // Parse tags if provided
+    let parsedTags = [];
+    if (tags) {
+      try {
+        parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+      } catch (e) {
+        parsedTags = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()) : tags;
+      }
+    }
+
     // Save poster record in DB
-    const poster = await Poster.create({
+    const posterData = {
+      user: req.admin.id,
       category,
+      title: title || `${category} Poster`,
+      description: description || "",
       originalImagePath: posterImagePath,
       finalImagePath: outputFilePath,
       placeholders: parsedPlaceholders,
-    });
+      tags: parsedTags,
+      isPrivate: isPrivate === 'true' || isPrivate === true,
+      metadata: {
+        width: imageMeta.width,
+        height: imageMeta.height,
+        format: imageMeta.format,
+        size: req.file.size
+      }
+    };
 
-    res.status(201).json({ message: "Poster uploaded and processed", poster });
+    const poster = await Poster.create(posterData);
+
+    // If it's a template, create template record
+    if (isTemplate === 'true' || isTemplate === true) {
+      await Template.create({
+        poster: poster._id,
+        creator: req.admin.id,
+        title: title || `${category} Template`,
+        description: description || "",
+        category,
+        tags: parsedTags,
+        pricing: {
+          price: parseFloat(templatePrice) || 0,
+          currency: 'USD'
+        },
+        preview: {
+          url: `${process.env.SERVER_URL}/uploads/processed/${path.basename(outputFilePath)}`,
+          thumbnailUrl: `${process.env.SERVER_URL}/uploads/processed/${path.basename(outputFilePath)}`
+        }
+      });
+    }
+
+    res.status(201).json({ 
+      message: "Poster uploaded and processed successfully", 
+      poster 
+    });
   } catch (error) {
     console.error("Upload poster error:", error);
-    res
-      .status(500)
-      .json({ message: "Server error during upload", error: error.message });
+    res.status(500).json({ 
+      message: "Server error during upload", 
+      error: error.message 
+    });
   }
 };
 

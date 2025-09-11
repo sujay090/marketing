@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { customerAPI, getImageUrl } from "../services/api.js";
+import { customerAPI } from "../services/api.js";
 import { toast } from "react-toastify";
 import { useTheme } from '../context/ThemeContext';
 
@@ -342,7 +342,7 @@ const CustomerList = () => {
                                             <td className="px-4 py-4">
                                                 {customer.logoUrl ? (
                                                     <img
-                                                        src={getImageUrl(customer.logoUrl)}
+                                                        src={customer.logoUrl}
                                                         alt={`${customer.companyName} logo`}
                                                         className="rounded-3 shadow-sm"
                                                         style={{
