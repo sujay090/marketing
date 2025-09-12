@@ -1,5 +1,6 @@
 import express from 'express';
 import sendWhatsApp from '../utils/sendWhatsaap.js';
+import { testCloudFront } from '../controllers/cloudfrontTestController.js';
 
 const router = express.Router();
 
@@ -50,5 +51,8 @@ router.get('/env-check', (req, res) => {
       '***' + process.env.MSGWAPI_TOKEN.slice(-4) : 'Not found'
   });
 });
+
+// Test CloudFront functionality
+router.get('/cloudfront', testCloudFront);
 
 export default router;

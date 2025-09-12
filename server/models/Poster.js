@@ -49,8 +49,16 @@ const posterSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  originalImageUrl: String, // Full URL for direct access
   finalImagePath: String,
+  finalImageUrl: String, // Full URL for direct access
   thumbnailPath: String,
+  thumbnailUrl: String, // Full URL for direct access
+  storageType: {
+    type: String,
+    enum: ['local', 's3'],
+    default: 's3'
+  },
   placeholders: [placeholderSchema],
   dimensions: {
     width: Number,

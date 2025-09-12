@@ -6,6 +6,8 @@ import GeneratedPoster from "../models/GeneratedPoster.js";
 import Customer from "../models/Customer.js";
 import User from "../models/User.js";
 import Template from "../models/Template.js";
+import { uploadToS3, generateS3Key, S3_CONFIG, getS3PublicUrl } from "../config/s3.js";
+import { getCloudFrontUrl, invalidatePosterCache } from "../services/cloudfrontService.js";
 
 // Utility to ensure directory exists
 function ensureDirExists(dirPath) {
@@ -28,11 +30,43 @@ export const uploadPoster = async (req, res) => {
     }
 
     // Parse placeholders JSON string to array, fallback to empty array
-    const parsedPlaceholders = JSON.parse(placeholders || "[]");
-    const posterImagePath = req.file.path;
+    let parsedPlaceholders;
+    try {
+      parsedPlaceholders = JSON.parse(placeholders || "[]");
+    } catch (error) {
+      console.error("Error parsing placeholders:", error);
+      parsedPlaceholders = [];
+    }
+    
+    // Handle both S3 and local storage
+    let posterImagePath, posterImageUrl, imageBuffer;
+    
+    if (process.env.STORAGE_TYPE === 'local') {
+      posterImagePath = req.file.path;
+      posterImageUrl = `${process.env.SERVER_URL || 'http://localhost:5000'}/${posterImagePath.replace(/\\/g, '/')}`;
+      console.log(`📁 Original poster saved locally at: ${posterImagePath}`);
+    } else {
+      // S3 storage
+      posterImagePath = req.file.key;
+      posterImageUrl = req.file.location;
+      console.log(`☁️ Original poster saved to S3 at: ${posterImageUrl}`);
+    }
 
-    // Get image metadata for width & height
-    const imageMeta = await sharp(posterImagePath).metadata();
+    // Get image metadata - handle both local and S3
+    let imageMeta;
+    if (process.env.STORAGE_TYPE === 'local') {
+      imageMeta = await sharp(posterImagePath).metadata();
+    } else {
+      // For S3, we need to download the image buffer first
+      const AWS = await import('aws-sdk');
+      const s3 = new AWS.S3();
+      const s3Object = await s3.getObject({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: posterImagePath
+      }).promise();
+      imageBuffer = s3Object.Body;
+      imageMeta = await sharp(imageBuffer).metadata();
+    }
 
     // Create SVG overlay with all placeholders in their positions/styles
     const svgOverlay = `
@@ -56,18 +90,45 @@ export const uploadPoster = async (req, res) => {
     `;
 
     // Composite original image with SVG overlay
-    const finalImageBuffer = await sharp(posterImagePath)
-      .composite([{ input: Buffer.from(svgOverlay), top: 0, left: 0 }])
-      .toBuffer();
+    let finalImageBuffer;
+    if (process.env.STORAGE_TYPE === 'local') {
+      finalImageBuffer = await sharp(posterImagePath)
+        .composite([{ input: Buffer.from(svgOverlay), top: 0, left: 0 }])
+        .toBuffer();
+    } else {
+      // Use the downloaded buffer for S3
+      finalImageBuffer = await sharp(imageBuffer)
+        .composite([{ input: Buffer.from(svgOverlay), top: 0, left: 0 }])
+        .toBuffer();
+    }
 
-    // Ensure processed folder exists
-    const outputFolder = path.join("uploads", "processed");
-    ensureDirExists(outputFolder);
-
-    const outputFilePath = path.join(outputFolder, `${Date.now()}-final.png`);
-
-    // Save final composited image
-    await sharp(finalImageBuffer).toFile(outputFilePath);
+    // Save processed image
+    let processedImagePath, processedImageUrl;
+    
+    if (process.env.STORAGE_TYPE === 'local') {
+      // Local storage
+      const outputFolder = path.join("uploads", "processed");
+      ensureDirExists(outputFolder);
+      const processedFileName = `${category}-${Date.now()}-processed.png`;
+      const outputFilePath = path.join(outputFolder, processedFileName);
+      
+      await sharp(finalImageBuffer).toFile(outputFilePath);
+      processedImagePath = outputFilePath;
+      processedImageUrl = `${process.env.SERVER_URL || 'http://localhost:5000'}/${outputFilePath.replace(/\\/g, '/')}`;
+      console.log(`✅ Processed poster saved locally at: ${outputFilePath}`);
+    } else {
+      // S3 storage
+      const processedKey = generateS3Key(S3_CONFIG.folders.processed, `${category}-processed.png`, req.admin.id);
+      const s3Result = await uploadToS3(finalImageBuffer, processedKey, 'image/png');
+      
+      if (!s3Result.success) {
+        throw new Error(`Failed to upload processed image to S3: ${s3Result.error}`);
+      }
+      
+      processedImagePath = s3Result.key;
+      processedImageUrl = s3Result.url;
+      console.log(`☁️ Processed poster saved to S3 at: ${processedImageUrl}`);
+    }
 
     // Parse tags if provided
     let parsedTags = [];
@@ -83,18 +144,25 @@ export const uploadPoster = async (req, res) => {
     const posterData = {
       user: req.admin.id,
       category,
-      title: title || `${category} Poster`,
+      title: title || `${category.charAt(0).toUpperCase() + category.slice(1)} Poster`,
       description: description || "",
-      originalImagePath: posterImagePath,
-      finalImagePath: outputFilePath,
+      originalImagePath: posterImagePath, // S3 key or local path
+      originalImageUrl: posterImageUrl, // Full URL
+      finalImagePath: processedImagePath, // S3 key or local path
+      finalImageUrl: processedImageUrl, // Full URL
       placeholders: parsedPlaceholders,
       tags: parsedTags,
+      isActive: true,
       isPrivate: isPrivate === 'true' || isPrivate === true,
+      storageType: process.env.STORAGE_TYPE || 's3',
       metadata: {
         width: imageMeta.width,
         height: imageMeta.height,
         format: imageMeta.format,
-        size: req.file.size
+        size: req.file.size,
+        originalName: req.file.originalname,
+        fileKey: process.env.STORAGE_TYPE === 's3' ? posterImagePath : null,
+        processedKey: process.env.STORAGE_TYPE === 's3' ? processedImagePath : null
       }
     };
 
@@ -122,7 +190,12 @@ export const uploadPoster = async (req, res) => {
 
     res.status(201).json({ 
       message: "Poster uploaded and processed successfully", 
-      poster 
+      poster: {
+        ...poster.toObject(),
+        imageUrl: processedImageUrl,
+        originalUrl: posterImageUrl,
+        thumbnailUrl: processedImageUrl
+      }
     });
   } catch (error) {
     console.error("Upload poster error:", error);
@@ -273,5 +346,141 @@ export const downloadPoster = async (req, res) => {
   } catch (error) {
     console.error("Download poster error:", error);
     res.status(500).json({ error: "Download failed" });
+  }
+};
+
+// @desc    Get all posters for user
+// @route   GET /api/posters
+// @access  Private
+export const getAllPosters = async (req, res) => {
+  try {
+    const { page = 1, limit = 12, category, search } = req.query;
+    
+    const query = { 
+      user: req.admin.id, 
+      isActive: true 
+    };
+    
+    // Add category filter if provided
+    if (category && category !== 'all') {
+      query.category = category;
+    }
+    
+    // Add search functionality
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } }
+      ];
+    }
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [posters, total] = await Promise.all([
+      Poster.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Poster.countDocuments(query)
+    ]);
+    
+    // Add full URLs to posters
+    const serverURL = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const postersWithUrls = posters.map(poster => ({
+      ...poster,
+      imageUrl: `${serverURL}/${poster.finalImagePath?.replace(/\\/g, '/') || poster.originalImagePath?.replace(/\\/g, '/')}`,
+      originalUrl: `${serverURL}/${poster.originalImagePath?.replace(/\\/g, '/')}`
+    }));
+    
+    res.json({
+      posters: postersWithUrls,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total,
+        hasNext: skip + parseInt(limit) < total,
+        hasPrev: parseInt(page) > 1
+      }
+    });
+  } catch (error) {
+    console.error("Get all posters error:", error);
+    res.status(500).json({ 
+      message: "Failed to fetch posters", 
+      error: error.message 
+    });
+  }
+};
+
+// @desc    Get poster by ID
+// @route   GET /api/posters/:id
+// @access  Private
+export const getPosterById = async (req, res) => {
+  try {
+    const poster = await Poster.findOne({
+      _id: req.params.id,
+      user: req.admin.id
+    });
+    
+    if (!poster) {
+      return res.status(404).json({ message: "Poster not found" });
+    }
+    
+    const serverURL = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
+    
+    res.json({
+      ...poster.toObject(),
+      imageUrl: `${serverURL}/${poster.finalImagePath?.replace(/\\/g, '/') || poster.originalImagePath?.replace(/\\/g, '/')}`,
+      originalUrl: `${serverURL}/${poster.originalImagePath?.replace(/\\/g, '/')}`
+    });
+  } catch (error) {
+    console.error("Get poster by ID error:", error);
+    res.status(500).json({ 
+      message: "Failed to fetch poster", 
+      error: error.message 
+    });
+  }
+};
+
+// @desc    Delete poster
+// @route   DELETE /api/posters/:id
+// @access  Private
+export const deletePoster = async (req, res) => {
+  try {
+    const poster = await Poster.findOne({
+      _id: req.params.id,
+      user: req.admin.id
+    });
+    
+    if (!poster) {
+      return res.status(404).json({ message: "Poster not found" });
+    }
+    
+    // Soft delete - mark as inactive
+    poster.isActive = false;
+    await poster.save();
+    
+    // Optional: Delete physical files (uncomment if you want hard delete)
+    /*
+    try {
+      if (poster.originalImagePath && fs.existsSync(poster.originalImagePath)) {
+        fs.unlinkSync(poster.originalImagePath);
+      }
+      if (poster.finalImagePath && fs.existsSync(poster.finalImagePath)) {
+        fs.unlinkSync(poster.finalImagePath);
+      }
+    } catch (fileError) {
+      console.warn("Failed to delete poster files:", fileError.message);
+    }
+    */
+    
+    res.json({ message: "Poster deleted successfully" });
+  } catch (error) {
+    console.error("Delete poster error:", error);
+    res.status(500).json({ 
+      message: "Failed to delete poster", 
+      error: error.message 
+    });
   }
 };
