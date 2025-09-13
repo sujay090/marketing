@@ -16,7 +16,7 @@ import { testS3Connection } from "./config/s3.js";
 import authRoutes from "./routes/authRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import posterRoutes from "./routes/posterRoutes.js";
-import aiPosterRoutes from "./routes/aiPosterRoutes.js";
+// import aiPosterRoutes from "./routes/aiPosterRoutes.js"; // Temporarily disabled for testing
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js";
 import timezoneRoutes from "./routes/timezoneRoutes.js";
@@ -91,7 +91,7 @@ app.get('/health', (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/posters", posterRoutes);
-app.use("/api/ai-posters", aiPosterRoutes);
+// app.use("/api/ai-posters", aiPosterRoutes); // Temporarily disabled for testing
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/schedules", scheduleRoutes);
 app.use("/api/timezone", timezoneRoutes);
